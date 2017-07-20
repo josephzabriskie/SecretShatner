@@ -1,0 +1,86 @@
+Start, load main menu scene
+Loop wait for selection from ...
+	-Select Number of players
+	-Player Names/Locations
+		-Set the Names/Initials for players
+		-Set location around the table for players
+		-Optional location shuffle
+	-Options
+		-Sfx?,Graphics?
+		-Gameplay
+			-Select starting president method
+				-Select
+				-Spin
+				-Vote
+			-Vote method options
+				-Timer. Length (10 - 60)
+					From Selection
+					From President
+				-All confirmed
+			-Vote recount. Let the president redo the vote (for mistakes)
+	-Play
+		::Setup::
+
+::Setup::
+	Change scene to main play scene
+	Show gameboard used for # players
+	Shuffle Bills
+	Loop show roles interface
+	Prompt for one player to narrate the beginning. (Give script based on # players)
+	If "select" is starting player method
+		Wait for Master to select starting player
+	Elif "vote"
+		Players vote on who goes first
+	Else "spin" is starting player method
+		Pick random starting president
+	::Main loop::
+
+	
+::Main Loop::
+	President picks chancellor from available options
+	If "Timer - Selection" is the vote method
+		Result = ::Timed vote::
+	Elif "Timer - President" is the vote method
+		Wait for president to start vote
+		Result = ::Timed vote::
+	Else "All confirmed" is the vote method
+		Wait for all votes to be confirmed
+		Result = Vote dict
+	If  Result != Success (No's win)
+		Panic += 1
+		if Panic <= 3
+			Flip top bill
+			Panic = 0
+	Else
+		Panic = 0
+		Pull top three Bills and show to president
+			If Veto power is enabled, show option
+		If President selects veto (do veto stuff)
+		Else
+			President picks one to discard
+			Discarded bill goes on top of discard pile
+			Remaining two bills are shown to the chancellor
+			The Chancellor picks one to discard
+			Discarded bill goes on top of discard pile
+			The remaining bill is places on the game board
+			If the tile is not liberal
+				Check game board for Special case actions (Gun, Investigate, etc)
+	Check Win conditions
+	President = next player
+	
+		
+
+		
+::Timed vote::
+	While (Still have time left (passed as arg))
+		Get players votes
+		if all votes are confirmed
+			break
+	Return votes dict {player:vote, ...}
+
+
+
+
+
+
+
