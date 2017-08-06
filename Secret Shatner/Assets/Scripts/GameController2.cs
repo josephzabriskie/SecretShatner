@@ -19,6 +19,10 @@ public class GameController2 : MonoBehaviour {
 	private StatePanelScript statePanelScript;
 	public GameObject confirmButton;
 	private ButtonScript confirmButtonScript;
+	public GameObject jaButton;
+	private ButtonScript jaButtonScript;
+	public GameObject neinButton;
+	private ButtonScript neinButtonScript;
 	private bool newState; // Used to skip setup after first time set in states. ONLY USED IN ExecuteGameState!
 
 
@@ -30,9 +34,9 @@ public class GameController2 : MonoBehaviour {
 		lS = LegislationStates.None;
 		pS = PowerStates.None;
 		statePanelScript = statePanel.GetComponent<StatePanelScript> ();
-		statePanel.SetActive (false);
 		confirmButtonScript = confirmButton.GetComponent<ButtonScript> ();
-		confirmButton.SetActive (false);
+		jaButtonScript = jaButton.GetComponent <ButtonScript> ();
+		neinButtonScript = neinButton.GetComponent <ButtonScript> ();
 
 		newState = true;
 
@@ -51,50 +55,61 @@ public class GameController2 : MonoBehaviour {
 		}
 		Debug.Assert(!((int)eS != 0 && (int)lS != 0 || (int)eS != 0 && (int)pS != 0 || (int)lS != 0 && (int)pS != 0),
 			string.Format ("State Error: multiple states not 'None': {0},{1},{2}", (int)eS, (int)lS, (int)pS));
-		bool done = false;
-		while(!done){
-			if (mS == MainStates.Election){ // In election state
-				Debug.Assert (eS != ElectionStates.None, "State Error: Entered into Election state with no substate");
-				if (eS == ElectionStates.PassPresident) {
-					if (newState) {
-						Debug.Log ("State: Election::Pass Presidency");
-						statePanelScript.SetText ("Election", "Pass Presidency");
-						confirmButtonScript.SetText ("Confirm", setActive: true);
-						newState = false;
-					}
-					if (!confirmButtonScript.EvalConfirm ()) { // If no button press
-						done = true; // done with state execute, keep waiting
-					}
-					else { // We got a button press, go to next state
-						eS = ElectionStates.ChooseChancellor;	
-						newState = true;
-					}
+		if (mS == MainStates.Election){ // In election state
+			Debug.Assert (eS != ElectionStates.None, "State Error: Entered into Election state with no substate");
+			if (eS == ElectionStates.PassPresident) {
+				if (newState) {
+					Debug.Log ("State: Election::Pass Presidency");
+					statePanelScript.SetText ("Election", "Pass Presidency");
+					confirmButtonScript.SetText ("Confirm", setActive: true);
+					newState = false;
 				}
-				if (eS == ElectionStates.ChooseChancellor){
-					if (newState) {
-						Debug.Log ("State: Election::Choose Chancellor");
-						statePanelScript.SetText ("Election", "Choose Chancellor");
-						confirmButtonScript.SetText ("Confirm", setActive: true);
-						newState = false;
-					}
-					if (!confirmButtonScript.EvalConfirm ()) { // If no button press
-						done = true; // done with state execute, keep waiting
-					}
-					else { // We got a button press, go to next state
-						eS = ElectionStates.Vote;	
-						newState = true;
-					}
-				}
-				if (eS == ElectionStates.Vote){
-					done = true;
+				if (confirmButtonScript.EvalConfirm ()) { // If no button press
+					eS = ElectionStates.ChooseChancellor;	
+					newState = true;
 				}
 			}
-			else if(mS == MainStates.Legislation){ // In Legislation state
+			if (eS == ElectionStates.ChooseChancellor){
+				if (newState) {
+					Debug.Log ("State: Election::Choose Chancellor");
+					statePanelScript.SetText ("Election", "Choose Chancellor");
+					confirmButtonScript.SetText ("Confirm", setActive: true);
+					newState = false;
+				}
+				if (confirmButtonScript.EvalConfirm ()) { // If no button press
+					eS = ElectionStates.Vote;	
+					newState = true;
+				}
 			}
-			else if(mS == MainStates.ExecutivePowers){ // In ExecutivePowers state
+			if (eS == ElectionStates.Vote){
+				if (newState){
+					Debug.Log ("State: Election::Vote");
+					statePanelScript.SetText ("Election", "Vote");
+					confirmButtonScript.SetActive (false);
+					jaButtonScript.SetActive (true);
+					neinButton.SetActive (true);
+				}
+				if(jaButtonScript.EvalConfirm ()){
+					mS = MainStates.Legislation;
+					lS = LegislationStates.PresidentLegislate;
+					eS = ElectionStates.None;
+				}
+				else if(neinButtonScript.EvalConfirm ()){
+					eS = ElectionStates.PassPresident;
+					newState = true;
+				}
+				else{
+					//No selection
+				}
+
 			}
-			else
-				Debug.LogError (string.Format ("Main State is not an expected value? MS: {0}", mS));
 		}
+		else if(mS == MainStates.Legislation){ // In Legislation state
+		}
+		else if(mS == MainStates.ExecutivePowers){ // In ExecutivePowers state
+		}
+		else
+			Debug.LogError (string.Format ("Main State is not an expected value? MS: {0}", mS));
+
 	}
 };
