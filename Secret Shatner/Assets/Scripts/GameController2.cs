@@ -13,6 +13,7 @@ public class GameController2 : MonoBehaviour {
 	public LegislationStates lS;
 	public PowerStates pS;
 
+	//UI Objects
 	public GameObject draw;
 	public GameObject discard;
 	public GameObject statePanel;
@@ -23,6 +24,8 @@ public class GameController2 : MonoBehaviour {
 	private ButtonScript jaButtonScript;
 	public GameObject neinButton;
 	private ButtonScript neinButtonScript;
+	public GameObject FailCounter;
+	private FailCountScript failCountScript;
 	private bool newState; // Used to skip setup after first time set in states. ONLY USED IN ExecuteGameState!
 
 
@@ -37,7 +40,7 @@ public class GameController2 : MonoBehaviour {
 		confirmButtonScript = confirmButton.GetComponent<ButtonScript> ();
 		jaButtonScript = jaButton.GetComponent <ButtonScript> ();
 		neinButtonScript = neinButton.GetComponent <ButtonScript> ();
-
+		failCountScript = FailCounter.GetComponent <FailCountScript> ();
 		newState = true;
 
 	}
@@ -87,24 +90,37 @@ public class GameController2 : MonoBehaviour {
 					statePanelScript.SetText ("Election", "Vote");
 					confirmButtonScript.SetActive (false);
 					jaButtonScript.SetActive (true);
-					neinButton.SetActive (true);
+					neinButtonScript.SetActive (true);
 				}
 				if(jaButtonScript.EvalConfirm ()){
+					Debug.Log ("Ja Press");
 					mS = MainStates.Legislation;
 					lS = LegislationStates.PresidentLegislate;
 					eS = ElectionStates.None;
-				}
-				else if(neinButtonScript.EvalConfirm ()){
-					eS = ElectionStates.PassPresident;
+					jaButtonScript.SetActive (false);
+					neinButtonScript.SetActive (false);
+					failCountScript.ResetCount ();
 					newState = true;
 				}
-				else{
-					//No selection
+				else if(neinButtonScript.EvalConfirm ()){
+					Debug.Log ("Nien Press");
+					eS = ElectionStates.PassPresident;
+					jaButtonScript.SetActive (false);
+					neinButtonScript.SetActive (false);
+					failCountScript.AddCount ();
+					newState = true;
 				}
-
+				else{}
 			}
 		}
 		else if(mS == MainStates.Legislation){ // In Legislation state
+			if (lS == LegislationStates.PresidentLegislate) {
+				if (newState) {
+					Debug.Log ("State: Legislation::PresidentLegislate");
+					statePanelScript.SetText ("Legislation", "President Legislate");
+					confirmButtonScript.SetActive (true);
+				}
+			}
 		}
 		else if(mS == MainStates.ExecutivePowers){ // In ExecutivePowers state
 		}
