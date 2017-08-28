@@ -14,8 +14,8 @@ public class GameController2 : MonoBehaviour {
 	public PowerStates pS;
 
 	//UI Objects
-	public GameObject draw;
-	public GameObject discard;
+	public Text drawCount;
+	public Text discardCount;
 	public GameObject statePanel;
 	private StatePanelScript statePanelScript;
 	public GameObject confirmButton;
@@ -26,6 +26,9 @@ public class GameController2 : MonoBehaviour {
 	private ButtonScript neinButtonScript;
 	public GameObject FailCounter;
 	private FailCountScript failCountScript;
+	private TileController tileController;
+	public GameObject gameStateObject;
+	private GameStateObjectScript gameStateObjectScript;
 	private bool newState; // Used to skip setup after first time set in states. ONLY USED IN ExecuteGameState!
 
 
@@ -41,6 +44,11 @@ public class GameController2 : MonoBehaviour {
 		jaButtonScript = jaButton.GetComponent <ButtonScript> ();
 		neinButtonScript = neinButton.GetComponent <ButtonScript> ();
 		failCountScript = FailCounter.GetComponent <FailCountScript> ();
+		tileController = new TileController (6, 11);
+		drawCount.text = tileController.GetDrawCount ().ToString ();
+		discardCount.text = tileController.GetDiscardCount ().ToString ();
+		gameStateObjectScript = gameStateObject.GetComponent <GameStateObjectScript> ();
+
 		newState = true;
 
 	}
@@ -49,13 +57,17 @@ public class GameController2 : MonoBehaviour {
 		ExecuteGameState ();
 	}
 
+	void PrezDraw3(){
+		
+	}
+
 	void restart(){} // Restart game
 
 	private void ExecuteGameState(){
-		if (newState) {
+		//if (newState) {
 			//State Error check We should never have more than one of the substates as non zero
-			Debug.Log (string.Format ("||Main: {0}|| Election: {1}|| Legislate: {2}|| Power: {3}||", mS, eS, lS, pS));
-		}
+		//	Debug.Log (string.Format ("||Main: {0}|| Election: {1}|| Legislate: {2}|| Power: {3}||", mS, eS, lS, pS));
+		//}
 		Debug.Assert(!((int)eS != 0 && (int)lS != 0 || (int)eS != 0 && (int)pS != 0 || (int)lS != 0 && (int)pS != 0),
 			string.Format ("State Error: multiple states not 'None': {0},{1},{2}", (int)eS, (int)lS, (int)pS));
 		if (mS == MainStates.Election){ // In election state
@@ -64,7 +76,11 @@ public class GameController2 : MonoBehaviour {
 				if (newState) {
 					Debug.Log ("State: Election::Pass Presidency");
 					statePanelScript.SetText ("Election", "Pass Presidency");
-					confirmButtonScript.SetText ("Confirm", setActive: true);
+					gameStateObjectScript.SetActiveStateObject (statePanel, true);
+					confirmButtonScript.SetText ("Confirm");
+					gameStateObjectScript.SetActiveStateObject (confirmButton, true);
+					gameStateObjectScript.SetActiveStateObject (jaButton, false);
+					gameStateObjectScript.SetActiveStateObject (neinButton, false);
 					newState = false;
 				}
 				if (confirmButtonScript.EvalConfirm ()) { // If no button press
@@ -76,7 +92,7 @@ public class GameController2 : MonoBehaviour {
 				if (newState) {
 					Debug.Log ("State: Election::Choose Chancellor");
 					statePanelScript.SetText ("Election", "Choose Chancellor");
-					confirmButtonScript.SetText ("Confirm", setActive: true);
+					//confirmButtonScript.SetText ("Confirm"); // Maybe not needed?
 					newState = false;
 				}
 				if (confirmButtonScript.EvalConfirm ()) { // If no button press
@@ -88,25 +104,33 @@ public class GameController2 : MonoBehaviour {
 				if (newState){
 					Debug.Log ("State: Election::Vote");
 					statePanelScript.SetText ("Election", "Vote");
-					confirmButtonScript.SetActive (false);
-					jaButtonScript.SetActive (true);
-					neinButtonScript.SetActive (true);
+					//confirmButtonScript.SetActive (false);
+					gameStateObjectScript.SetActiveStateObject(confirmButton, false);
+					//jaButtonScript.SetActive (true);
+					gameStateObjectScript.SetActiveStateObject(jaButton, true);
+					//neinButtonScript.SetActive (true);
+					gameStateObjectScript.SetActiveStateObject(neinButton, true);
+					newState = false;
 				}
 				if(jaButtonScript.EvalConfirm ()){
 					Debug.Log ("Ja Press");
 					mS = MainStates.Legislation;
 					lS = LegislationStates.PresidentLegislate;
 					eS = ElectionStates.None;
-					jaButtonScript.SetActive (false);
-					neinButtonScript.SetActive (false);
+					//jaButtonScript.SetActive (false);
+					gameStateObjectScript.SetActiveStateObject (jaButton, false);
+					//neinButtonScript.SetActive (false);
+					gameStateObjectScript.SetActiveStateObject (neinButton, false);
 					failCountScript.ResetCount ();
 					newState = true;
 				}
 				else if(neinButtonScript.EvalConfirm ()){
 					Debug.Log ("Nien Press");
 					eS = ElectionStates.PassPresident;
-					jaButtonScript.SetActive (false);
-					neinButtonScript.SetActive (false);
+					//jaButtonScript.SetActive (false);
+					gameStateObjectScript.SetActiveStateObject (jaButton, false);
+					//neinButtonScript.SetActive (false);
+					gameStateObjectScript.SetActiveStateObject (neinButton, false);
 					failCountScript.AddCount ();
 					newState = true;
 				}
@@ -118,7 +142,9 @@ public class GameController2 : MonoBehaviour {
 				if (newState) {
 					Debug.Log ("State: Legislation::PresidentLegislate");
 					statePanelScript.SetText ("Legislation", "President Legislate");
-					confirmButtonScript.SetActive (true);
+					statePanelScript.SetTopPosition ();
+					//confirmButtonScript.SetActive (true);
+					newState = false;
 				}
 			}
 		}
